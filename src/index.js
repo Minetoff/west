@@ -141,12 +141,45 @@ class Lad extends Dog {
     }
 }
 
+class Rogue extends Creature {
+    constructor(name, maxPower, image) {
+        super(name || "Изгой", maxPower || 2, image);
+    }
+
+    attack(gameContext, continuation) {
+        const target = gameContext.oppositePlayer.table[gameContext.position];
+        if (target) {
+            const targetProto = Object.getPrototypeOf(target);
+            const abilities = [
+                "modifyDealedDamageToCreature",
+                "modifyDealedDamageToPlayer",
+                "modifyTakenDamage"
+            ];
+            for (const ability of abilities) {
+                if (targetProto.hasOwnProperty(ability)) {
+                    const stolenAbility = targetProto[ability];
+                    delete targetProto[ability];
+                    if (!this.hasOwnProperty(ability)) {
+                        this[ability] = stolenAbility;
+                    }
+                }
+            }
+            gameContext.updateView();
+        }
+        super.attack(gameContext, continuation);
+    }
+}
+
+
+
 const seriffStartDeck = [
     new Duck(),
     new Duck(),
     new Duck(),
+    new Rogue(),
 ];
 const banditStartDeck = [
+    new Lad(),
     new Lad(),
     new Lad(),
 ];
