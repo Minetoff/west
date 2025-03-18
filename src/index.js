@@ -27,7 +27,14 @@ function getCreatureDescription(card) {
     return 'Существо';
 }
 
-class Duck extends Card {
+class Creature extends Card {
+    getDescriptions() {
+        const baseDescriptions = super.getDescriptions(); // получаем описание от Card
+        return [getCreatureDescription(this), ...baseDescriptions];
+    }
+}
+
+class Duck extends Creature {
     constructor(name, power, image){
         super(name || "Мирная утка", power || 2, image);
     }
@@ -36,9 +43,26 @@ class Duck extends Card {
     swims() { console.log('float: both;') };
 }
 
-class Dog extends Card {
+class Dog extends Creature {
     constructor(name, power, image){
         super(name || "Пес-бандит", power || 3, image);
+    }
+}
+
+class Trasher extends Dog {
+    constructor(name, power, image){
+        super(name || "Громила", power || 5, image);
+    }
+
+    modifyTakenDamage(value, fromCard, gameContext, continuation) {
+        const newDamage = Math.max(value - 1, 0);
+        this.view.signalAbility(() => {
+            continuation(newDamage);
+        });
+    }
+
+    getDescriptions() {
+        return ["Громила: получает на 1 меньше урона", ...super.getDescriptions()];
     }
 }
 
@@ -49,7 +73,8 @@ const seriffStartDeck = [
     new Duck(),
 ];
 const banditStartDeck = [
-    new Dog(),
+    new Lad(),
+    new Lad(),
 ];
 
 
