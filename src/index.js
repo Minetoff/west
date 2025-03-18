@@ -35,34 +35,39 @@ class Creature extends Card {
 }
 
 class Duck extends Creature {
-    constructor(name, power, image){
+    constructor(name, power, image) {
         super(name || "Мирная утка", power || 2, image);
     }
 
-    quacks() { console.log('quack') };
-    swims() { console.log('float: both;') };
+    quacks() {
+        console.log('quack')
+    };
+
+    swims() {
+        console.log('float: both;')
+    };
 }
 
 class Dog extends Creature {
-    constructor(name, power, image){
+    constructor(name, power, image) {
         super(name || "Пес-бандит", power || 3, image);
     }
 }
 
 class Gatling extends Card {
-    constructor(){
+    constructor() {
         super("Гатлинг", 6);
     }
 
     attack(gameContext, continuation) {
         const taskQueue = new TaskQueue();
-        
+
         const {currentPlayer, oppositePlayer, position, updateView} = gameContext;
 
         taskQueue.push(onDone => this.view.showAttack(onDone));
         for (let card of oppositePlayer.table) {
             taskQueue.push(onDone => {
-                    this.dealDamageToCreature(2, card, gameContext, onDone);
+                this.dealDamageToCreature(2, card, gameContext, onDone);
             });
         }
 
@@ -71,7 +76,7 @@ class Gatling extends Card {
 }
 
 class Trasher extends Dog {
-    constructor(name, power, image){
+    constructor(name, power, image) {
         super(name || "Громила", power || 5, image);
     }
 
@@ -87,6 +92,54 @@ class Trasher extends Dog {
     }
 }
 
+class Lad extends Dog {
+    constructor(name, maxPower, image) {
+        super(name || "Браток", maxPower || 2, image);
+    }
+
+    static getInGameCount() {
+        return this.inGameCount || 0;
+    }
+
+    static setInGameCount(value) {
+        this.inGameCount = value;
+    }
+
+    static getBonus() {
+        return this.getInGameCount() * (this.getInGameCount() + 1) / 2;
+    }
+
+    doAfterComingIntoPlay(gameContext, continuation) {
+        super.doAfterComingIntoPlay(gameContext, () => {
+            Lad.setInGameCount(Lad.getInGameCount() + 1);
+            continuation();
+        })
+    }
+
+    doBeforeRemoving(continuation) {
+        super.doBeforeRemoving(() => {
+            Lad.setInGameCount(Lad.getInGameCount() - 1);
+            continuation();
+        });
+    }
+
+    modifyDealedDamageToCreature(value, toCard, gameContext, continuation) {
+        continuation(value + Lad.getBonus());
+    }
+
+    modifyTakenDamage(value, fromCard, gameContext, continuation) {
+        continuation(Math.max(value - Lad.getBonus(), 0));
+    }
+
+    getDescriptions() {
+        const baseDescriptions = super.getDescriptions();
+
+        if (Lad.prototype.hasOwnProperty('modifyDealedDamageToCreature')) {
+            return ["Чем их больше, тем они сильнее", ...baseDescriptions];
+        }
+        return baseDescriptions;
+    }
+}
 
 const seriffStartDeck = [
     new Duck(),
